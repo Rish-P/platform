@@ -14,10 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { SearchResultDoc } from '@hcengineering/core'
+  import presentation, {
+    ReduceContext,
+    SearchResult,
+    reduceCalls,
+    searchFor,
+    type SearchItem
+  } from '@hcengineering/presentation'
   import { Label, ListView, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import presentation, { type SearchItem, SearchResult, searchFor } from '@hcengineering/presentation'
-  import { SearchResultDoc } from '@hcengineering/core'
 
   export let query: string = ''
 
@@ -67,12 +73,12 @@
     return false
   }
 
-  async function updateItems (localQuery: string): Promise<void> {
+  const updateItems = reduceCalls(async function (ctx: ReduceContext, localQuery: string): Promise<void> {
     const r = await searchFor('mention', localQuery)
-    if (r.query === query) {
+    if (r.query === query && !ctx.canceled) {
       items = r.items
     }
-  }
+  })
   $: void updateItems(query)
 </script>
 

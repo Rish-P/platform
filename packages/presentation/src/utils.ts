@@ -552,3 +552,63 @@ export function decodeTokenPayload (token: string): any {
 export function isAdminUser (): boolean {
   return decodeTokenPayload(getMetadata(plugin.metadata.Token) ?? '').admin === 'true'
 }
+
+export interface ReduceContext {
+  canceled: boolean
+}
+
+type ReduceParameters<T extends (ctx: ReduceContext, ...args: any) => any> = T extends (
+  ctx: ReduceContext,
+  ...args: infer P
+) => any
+  ? P
+  : never
+
+/**
+ * Utility method to skip middle update calls, optimistically if update function is called multiple times with few different parameters, only the last variant will be executed.
+ * The last invocation is executed after a few cycles, allowing to skip middle ones.
+ *
+ * This method can be used inside Svelte components to collapse complex update logic and handle interactions.
+ */
+export function reduceCalls<T extends (ctx: ReduceContext, ...args: ReduceParameters<T>) => Promise<void>> (
+  operation: T
+): (...args: ReduceParameters<T>) => Promise<void> {
+  let nextCalls: Array<{ ctx: ReduceContext, op: (ctx: ReduceContext) => Promise<void> }> = []
+
+  const cancel = (): void => {
+    nextCalls.forEach((it) => {
+      it.ctx.canceled = true
+    })
+  }
+  const next = (): void => {
+    const last = nextCalls.pop()
+    if (last !== undefined) {
+      cancel()
+      nextCalls = [last]
+      void last.op(last.ctx)
+    }
+  }
+  return async function (...args: ReduceParameters<T>): Promise<void> {
+    const myOp = async (ctx: ReduceContext): Promise<void> => {
+      await operation(ctx, ...args)
+      nextCalls.pop()
+      next()
+    }
+    // Mark all next calls canceled
+    cancel()
+
+    nextCalls.push({ op: myOp, ctx: { canceled: false } })
+
+    if (nextCalls.length === 1) {
+      // Iterate few cycles, to execute only last one
+      for (let t = 0; t < 5; t++) {
+        await Promise.resolve()
+      }
+      if (nextCalls.length > 1) {
+        next()
+      } else {
+        await myOp(nextCalls[0].ctx)
+      }
+    }
+  }
+}

@@ -166,11 +166,11 @@
   let syncPromise: Promise<void> | undefined = undefined
   let locUpdate = 0
 
-  getResource(notification.function.HasInboxNotifications).then((f) => {
+  void getResource(notification.function.HasInboxNotifications).then((f) => {
     hasNotificationsFn = f
   })
 
-  $: hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
+  $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
     hasInboxNotifications = res
   })
 

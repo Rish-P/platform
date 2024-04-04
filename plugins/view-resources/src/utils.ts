@@ -63,7 +63,8 @@ import {
   type KeyedAttribute,
   getFiltredKeys,
   isAdminUser,
-  createQuery
+  createQuery,
+  type ReduceContext
 } from '@hcengineering/presentation'
 import {
   ErrorPresenter,
@@ -346,11 +347,14 @@ export function buildConfigLookup<T extends Doc> (
   return res
 }
 
-export async function buildModel (options: BuildModelOptions): Promise<AttributeModel[]> {
+export async function buildModel (ctx: ReduceContext, options: BuildModelOptions): Promise<AttributeModel[]> {
   // eslint-disable-next-line array-callback-return
   const model = options.keys
     .map((key) => (typeof key === 'string' ? { key } : key))
     .map(async (key) => {
+      if (ctx.canceled) {
+        return
+      }
       try {
         // Check if it is a mixin attribute configuration
         const pos = key.key.lastIndexOf('.')

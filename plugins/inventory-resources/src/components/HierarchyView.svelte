@@ -64,7 +64,7 @@
   $: lookup = buildConfigLookup(client.getHierarchy(), _class, config)
 </script>
 
-{#await buildModel({ client, _class, keys: config, lookup })}
+{#await buildModel({ canceled: false }, { client, _class, keys: config, lookup })}
   <Loading />
 {:then model}
   <table class="table-body">

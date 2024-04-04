@@ -18,13 +18,13 @@
     Doc,
     DocumentQuery,
     FindOptions,
+    RateLimiter,
     Ref,
     Space,
-    RateLimiter,
     mergeQueries
   } from '@hcengineering/core'
   import { IntlString, getResource } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { ReduceContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import { BuildModelKey, ViewOptionModel, ViewOptions, ViewQueryOption, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -70,9 +70,14 @@
   $: resultOptions = { ...options, lookup, ...(orderBy !== undefined ? { sort: { [orderBy[0]]: orderBy[1] } } : {}) }
 
   let resultQuery: DocumentQuery<Doc> = query
-  $: void getResultQuery(query, viewOptionsConfig, viewOptions).then((p) => {
-    resultQuery = mergeQueries(p, query)
+
+  const update = reduceCalls(async function (ctx: ReduceContext, query: DocumentQuery<Doc>, viewOptions: ViewOptions) {
+    const p = await getResultQuery(query, viewOptionsConfig, viewOptions)
+    if (!ctx.canceled) {
+      resultQuery = mergeQueries(p, query)
+    }
   })
+  $: void update(query, viewOptions)
 
   $: queryNoLookup = noLookup(resultQuery)
 

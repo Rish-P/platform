@@ -33,7 +33,7 @@
   import presentation from '../plugin'
   import { ObjectSearchCategory, ObjectSearchResult } from '../types'
   import { getClient } from '../utils'
-  import { hasResource } from '..'
+  import { hasResource, reduceCalls, ReduceContext } from '..'
 
   export let query: string = ''
   export let label: IntlString | undefined = undefined
@@ -108,7 +108,8 @@
 
   export function done () {}
 
-  async function updateItems (
+  const updateItems = reduceCalls(async function updateItems (
+    ctx: ReduceContext,
     cat: ObjectSearchCategory | undefined,
     query: string,
     relatedDocuments?: RelatedDocument[]
@@ -132,6 +133,9 @@
 
     // Automatic try next category and show available items if so
     for (const c of categories) {
+      if (ctx.canceled) {
+        return
+      }
       if (c._id !== cat._id) {
         const ff = await getResource(c.query)
         const cresult = await ff(client, query, { in: relatedDocuments, nin: ignore })
@@ -148,8 +152,8 @@
         }
       }
     }
-  }
-  $: updateItems(category, query, relatedDocuments)
+  })
+  $: void updateItems(category, query, relatedDocuments)
 
   const manager = createFocusManager()
 
