@@ -23,10 +23,14 @@ import {
   type ColorDefinition,
   getPlatformAvatarColorByName,
   getPlatformAvatarColorForTextDef,
-  themeStore
+  themeStore,
+  showPopup,
+  SelectPopup,
+  type PopupAlignment
 } from '@hcengineering/ui'
 
 import { type CollaborationUser } from './types'
+import { mInsertTable } from './components/extensions'
 
 export function getDataAttribute (
   name: string,
@@ -73,4 +77,29 @@ export async function getCollaborationUser (): Promise<CollaborationUser> {
     email: me.email,
     color: color.icon ?? 'var(--theme-button-default)'
   }
+}
+
+export async function addTableHandler (
+  insertTable: (options: { rows?: number, cols?: number, withHeaderRow?: boolean }) => void,
+  alignment?: PopupAlignment
+): Promise<void> {
+  showPopup(
+    SelectPopup,
+    {
+      value: mInsertTable.map((it) => ({ id: it.label, text: it.label }))
+    },
+    alignment ?? 'center',
+    (val) => {
+      if (val !== undefined) {
+        const tab = mInsertTable.find((it) => it.label === val)
+        if (tab !== undefined) {
+          insertTable({
+            cols: tab.cols,
+            rows: tab.rows,
+            withHeaderRow: tab.header
+          })
+        }
+      }
+    }
+  )
 }

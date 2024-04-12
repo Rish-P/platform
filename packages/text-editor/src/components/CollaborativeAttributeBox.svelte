@@ -21,7 +21,7 @@
   import { FocusExtension } from './extension/focus'
   import { type FileAttachFunction } from './extension/types'
   import textEditorPlugin from '../plugin'
-  import { RefAction, TextNodeAction } from '../types'
+  import { RefAction, TextEditorCommandHandler, TextNodeAction } from '../types'
 
   export let object: Doc
   export let key: KeyedAttribute
@@ -114,6 +114,7 @@
   {readonly}
   field={key.key}
   canEmbedFiles={false}
+  withSideMenu={false}
   on:focus
   on:blur
   on:update
