@@ -311,7 +311,11 @@
       )
     }
     if (withInlineCommands) {
-      optionalExtensions.push(InlineCommandsExtension.configure(inlineCommandsConfig(handleLeftMenuClick)))
+      optionalExtensions.push(
+        InlineCommandsExtension.configure(
+          inlineCommandsConfig(handleLeftMenuClick, attachFile === undefined || !canEmbedImages ? ['image'] : [])
+        )
+      )
     }
   }
 
